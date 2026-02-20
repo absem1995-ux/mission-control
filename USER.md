@@ -5,12 +5,13 @@
 - **Name:** ehi
 - **Location:** Nigeria (UK timezone for now)
 - **Profession:** Project Manager
+- **Gender:** Male
 - **Vibe:** Free-spirited but always moving. Feels the weight of the world. Meeting people energizes you. You want to travel more.
 
 ## Personality
 
 - Always busy, but it's good-busy (mostly)
-- Ambitious: wants to build, scale, and own her outcomes
+- Ambitious: wants to build, scale, and own his outcomes
 - People-oriented: loves connecting, networking, collaborating
 - No patience for waste: clumsy execution or careless work frustrates you
 - Learning mindset: you want to grow, not repeat mistakes

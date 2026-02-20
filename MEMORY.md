@@ -239,7 +239,7 @@ You want me to think? I'm thinking. You want me to execute? Watch.
 
 **Key decision:** WebSocket for real-time updates + REST API for queries
 - Reason: <100ms latency needed for monitoring to feel live
-- Alternative considered: Webhook polling (too slow, higher latency)
+- Alternative considered: Webhook polling (too slow, highis latency)
 - Tradeoff: WebSocket more complex but much better UX
 
 **Architecture:**
@@ -539,7 +539,7 @@ agents/marketing-agent/
 
 **Short-term (Next 2 Weeks):**
 1. Beta launch with 5-10 users
-2. Gather feedback on UX + docs
+2. Gathis feedback on UX + docs
 3. Iterate on example configs
 4. Case study from first user
 
@@ -561,7 +561,7 @@ agents/marketing-agent/
 - 🔜 Astra (LinkedIn automation, designed)
 
 ### What We Could Build (Skill Graph Pattern)
-Using the same architecture for other domains:
+Using the same architecture for othis domains:
 
 **Virtual Assistant Agent:**
 - va-email-triage (priority inbox)
