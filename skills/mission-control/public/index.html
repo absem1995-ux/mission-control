@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mission Control — Multi-Agent Dashboard v3.0</title>
+  <title>Mission Control — Dashboard v3.1</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -31,28 +31,36 @@
       -webkit-text-fill-color: transparent;
     }
     
-    .status-bar {
+    /* Stats Bar */
+    .stats-bar {
       display: flex;
       gap: 20px;
-      align-items: center;
-      font-size: 14px;
+      background: rgba(0,0,0,0.3);
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
     
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
+    .stat {
+      text-align: center;
     }
     
-    .status-dot.healthy { background: #00ff00; }
-    .status-dot.working { background: #00d4ff; }
-    .status-dot.idle { background: #ffaa00; }
-    .status-dot.error { background: #ff0055; }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00ffaa;
+    }
     
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse { animation: pulse 2s infinite; }
+    .stat-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+    }
+    
+    .stat.completed .stat-value { color: #00ff00; }
+    .stat.in-progress .stat-value { color: #00d4ff; }
+    .stat.total .stat-value { color: #ffaa00; }
+    .stat.backlog .stat-value { color: #ff64ff; }
     
     /* Tabs */
     .tabs {
@@ -74,41 +82,102 @@
     }
     
     .tab:hover { background: rgba(0, 212, 255, 0.1); }
-    
     .tab.active {
       background: linear-gradient(135deg, #00d4ff 0%, #00ffaa 100%);
       color: #0a0e27;
-      border-color: #00ffaa;
     }
     
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     
-    /* Common styles */
-    .card {
+    /* Kanban Board */
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    
+    .kanban-column {
       background: rgba(20, 35, 60, 0.8);
       border: 1px solid #00d4ff;
       border-radius: 8px;
       padding: 16px;
-      margin-bottom: 16px;
+      min-height: 400px;
     }
     
-    .card-title {
-      font-size: 14px;
+    .column-header {
       font-weight: bold;
-      color: #00ffaa;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
     }
     
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
+    .column-header.recurring { border-color: #00d4ff; color: #00d4ff; }
+    .column-header.backlog { border-color: #ff64ff; color: #ff64ff; }
+    .column-header.in_progress { border-color: #00ff00; color: #00ff00; }
+    .column-header.done { border-color: #888; color: #888; }
+    
+    .column-count {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
     }
     
+    /* Task Cards */
+    .task-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .task-card:hover {
+      border-color: #00d4ff;
+      transform: translateY(-2px);
+    }
+    
+    .task-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    
+    .task-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    
+    .tag.high { background: #ff0055; }
+    .tag.medium { background: #ffaa00; color: #0a0e27; }
+    .tag.low { background: #00ffaa; color: #0a0e27; }
+    
+    .tag.video { background: #ff64ff; }
+    .tag.written { background: #00d4ff; color: #0a0e27; }
+    .tag.social { background: #00ff00; color: #0a0e27; }
+    
+    .tag.owner-me { background: #ffaa00; color: #0a0e27; }
+    .tag.owner-agent { background: #00d4ff; color: #0a0e27; }
+    
+    .tag.project-content { background: #ff64ff; }
+    .tag.project-dev { background: #00ff00; }
+    .tag.project-research { background: #00d4ff; }
+    
+    /* Common */
     .btn {
       padding: 8px 16px;
       border: 1px solid #00d4ff;
@@ -120,606 +189,333 @@
     }
     
     .btn:hover { background: rgba(0, 212, 255, 0.2); }
+    .btn-primary { background: #00d4ff; color: #0a0e27; }
     
-    .btn-primary {
-      background: linear-gradient(135deg, #00d4ff 0%, #00ffaa 100%);
-      color: #0a0e27;
-      border: none;
-    }
-    
-    /* Status badges */
-    .badge {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      text-transform: uppercase;
-      font-weight: bold;
-    }
-    
-    .badge.high { background: #ff0055; }
-    .badge.medium { background: #ffaa00; color: #0a0e27; }
-    .badge.low { background: #00ffaa; color: #0a0e27; }
-    
-    .badge.todo { background: #888; }
-    .badge.in_progress { background: #00d4ff; color: #0a0e27; }
-    .badge.done { background: #00ff00; color: #0a0e27; }
-    
-    .badge.idea { background: #ff64ff; }
-    .badge.script { background: #00d4ff; color: #0a0e27; }
-    .badge.thumbnail { background: #ffaa00; color: #0a0e27; }
-    .badge.filming { background: #ff6400; }
-    .badge.done { background: #00ff00; color: #0a0e27; }
-    
-    /* Forms */
-    input, select, textarea {
+    input, select {
       width: 100%;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      background: rgba(0,0,0,0.3);
       border: 1px solid #00d4ff;
-      color: #e8e8e8;
+      color: #fff;
       border-radius: 4px;
-      margin-bottom: 10px;
-      font-family: inherit;
-    }
-    
-    /* Memory search */
-    .search-box {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    
-    .search-box input { flex: 1; margin-bottom: 0; }
-    
-    /* Team */
-    .team-member {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
       margin-bottom: 8px;
     }
     
-    .team-avatar {
-      font-size: 32px;
-      width: 50px;
-      text-align: center;
-    }
-    
-    .team-info { flex: 1; }
-    .team-name { font-weight: bold; color: #00ffaa; }
-    .team-role { font-size: 12px; color: #888; }
-    .team-status { font-size: 11px; }
-    
-    /* Office */
-    .office-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-    
-    .workstation {
-      background: rgba(0, 0, 0, 0.3);
+    .card {
+      background: rgba(20, 35, 60, 0.8);
+      border: 1px solid #00d4ff;
       border-radius: 8px;
       padding: 16px;
-      text-align: center;
-      border: 2px solid transparent;
-    }
-    
-    .workstation.working { border-color: #00ff00; }
-    .workstation.idle { border-color: #ffaa00; opacity: 0.6; }
-    
-    .station-icon { font-size: 40px; margin-bottom: 8px; }
-    .station-name { font-weight: bold; color: #00d4ff; }
-    .station-task { font-size: 11px; color: #888; margin-top: 8px; }
-    .computer {
-      width: 40px;
-      height: 28px;
-      background: #333;
-      border-radius: 4px;
-      margin: 8px auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .computer.on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-    .computer.off { background: #333; }
-    
-    /* Calendar */
-    .calendar-event {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      border-left: 3px solid #00d4ff;
-    }
-    
-    .calendar-time {
-      font-weight: bold;
-      color: #00d4ff;
-      min-width: 80px;
-    }
-    
-    .calendar-recurring {
-      font-size: 10px;
-      background: #00ffaa;
-      color: #0a0e27;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    
-    /* Pipeline stages */
-    .pipeline-stages {
-      display: flex;
-      gap: 8px;
       margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    
-    .stage {
-      padding: 6px 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-    
-    .stage.active {
-      background: #00d4ff;
-      color: #0a0e27;
     }
     
     /* Memory */
     .memory-item {
       padding: 16px;
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0,0,0,0.2);
       border-radius: 8px;
       margin-bottom: 12px;
       border-left: 3px solid #00ffaa;
     }
     
-    .memory-title { font-weight: bold; color: #00d4ff; margin-bottom: 8px; }
-    .memory-content { font-size: 13px; line-height: 1.5; }
-    .memory-meta { font-size: 11px; color: #888; margin-top: 8px; }
+    .memory-search {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
     
-    .memory-item.correction { border-left-color: #ff0055; }
-    .memory-item.system { border-left-color: #00d4ff; }
-    .memory-item.discovery { border-left-color: #ffaa00; }
-    .memory-item.learning { border-left-color: #00ff00; }
+    .memory-search input { flex: 1; margin-bottom: 0; }
     
     /* Loading */
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #00d4ff;
-    }
+    .loading { text-align: center; padding: 40px; color: #00d4ff; }
     
-    .spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid #00d4ff;
-      border-radius: 50%;
-      border-top-color: #00ffaa;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse { animation: pulse 2s infinite; }
   </style>
 </head>
 <body>
   <header>
-    <h1>🎯 MISSION CONTROL v3.0</h1>
-    <div class="status-bar">
-      <span><span class="status-dot healthy pulse"></span>System: Online</span>
-      <span id="teamCount">Team: 0</span>
-      <span id="taskCount">Active Tasks: 0</span>
+    <h1>🎯 MISSION CONTROL v3.1</h1>
+    <div style="display: flex; gap: 20px; align-items: center;">
+      <span class="pulse" style="color: #00ff00;">● LIVE</span>
     </div>
   </header>
   
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat completed">
+      <div class="stat-value" id="stat-completed">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat in-progress">
+      <div class="stat-value" id="stat-progress">0</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat backlog">
+      <div class="stat-value" id="stat-backlog">0</div>
+      <div class="stat-label">Backlog</div>
+    </div>
+    <div class="stat recurring">
+      <div class="stat-value" id="stat-recurring">0</div>
+      <div class="stat-label">Recurring</div>
+    </div>
+    <div class="stat total">
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+  </div>
+  
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('command')">🏠 Command Center</button>
-    <button class="tab" onclick="switchTab('tasks')">✅ Tasks Board</button>
-    <button class="tab" onclick="switchTab('pipeline')">📺 Content Pipeline</button>
+    <button class="tab active" onclick="switchTab('tasks')">✅ Tasks</button>
+    <button class="tab" onclick="switchTab('content')">📺 Content</button>
     <button class="tab" onclick="switchTab('calendar')">📅 Calendar</button>
-    <button class="tab" onclick="switchTab('team')">👥 Team</button>
-    <button class="tab" onclick="switchTab('office')">🏢 Office</button>
     <button class="tab" onclick="switchTab('memories')">🧠 Memory</button>
+    <button class="tab" onclick="switchTab('team')">👥 Team</button>
   </div>
   
-  <!-- COMMAND CENTER -->
-  <div id="command" class="tab-content active">
-    <div class="grid" id="commandGrid">
-      <div class="loading"><div class="spinner"></div></div>
+  <!-- TASKS KANBAN -->
+  <div id="tasks" class="tab-content active">
+    <div class="kanban">
+      <div class="kanban-column">
+        <div class="column-header recurring">
+          🔄 RECURRING <span class="column-count" id="count-recurring">0</span>
+        </div>
+        <div id="col-recurring"></div>
+      </div>
+      
+      <div class="kanban-column">
+        <div class="column-header backlog">
+          📥 BACKLOG <span class="column-count" id="count-backlog">0</span>
+        </div>
+        <div id="col-backlog"></div>
+      </div>
+      
+      <div class="kanban-column">
+        <div class="column-header in_progress">
+          ⚡ IN PROGRESS <span class="column-count" id="count-in_progress">0</span>
+        </div>
+        <div id="col-in_progress"></div>
+      </div>
+      
+      <div class="kanban-column">
+        <div class="column-header done">
+          ✅ DONE <span class="column-count" id="count-done">0</span>
+        </div>
+        <div id="col-done"></div>
+      </div>
     </div>
-  </div>
-  
-  <!-- TASKS BOARD -->
-  <div id="tasks" class="tab-content">
-    <div style="margin-bottom: 20px;">
-      <button class="btn btn-primary" onclick="showAddTask()">+ Add Task</button>
-    </div>
-    <div id="tasksBoard"></div>
+    
+    <button class="btn" onclick="showAddTask()" style="margin-top: 20px;">+ Add Task</button>
   </div>
   
   <!-- CONTENT PIPELINE -->
-  <div id="pipeline" class="tab-content">
-    <div class="pipeline-stages">
-      <span class="stage active" onclick="filterPipeline('all')">All</span>
-      <span class="stage" onclick="filterPipeline('idea')">💡 Idea</span>
-      <span class="stage" onclick="filterPipeline('script')">📝 Script</span>
-      <span class="stage" onclick="filterPipeline('thumbnail')">🖼️ Thumbnail</span>
-      <span class="stage" onclick="filterPipeline('filming')">🎬 Filming</span>
-      <span class="stage" onclick="filterPipeline('done')">✅ Done</span>
+  <div id="content" class="tab-content">
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <button class="btn" onclick="filterContent('all')">All</button>
+      <button class="btn" onclick="filterContent('video')">🎬 Video</button>
+      <button class="btn" onclick="filterContent('written')">📝 Written</button>
+      <button class="btn" onclick="filterContent('social')">📱 Social</button>
     </div>
-    <div class="grid" id="pipelineGrid"></div>
+    <div class="grid" id="content-grid"></div>
   </div>
   
   <!-- CALENDAR -->
   <div id="calendar" class="tab-content">
-    <div style="margin-bottom: 20px;">
-      <button class="btn btn-primary" onclick="showAddEvent()">+ Add Event</button>
-    </div>
-    <div id="calendarGrid"></div>
-  </div>
-  
-  <!-- TEAM -->
-  <div id="team" class="tab-content">
-    <div id="teamGrid"></div>
-  </div>
-  
-  <!-- OFFICE -->
-  <div id="office" class="tab-content">
-    <div class="office-grid" id="officeGrid"></div>
+    <div class="grid" id="calendar-grid"></div>
   </div>
   
   <!-- MEMORIES -->
   <div id="memories" class="tab-content">
-    <div class="search-box">
-      <input type="text" id="memorySearch" placeholder="Search memories..." onkeyup="searchMemories()">
+    <div class="memory-search">
+      <input type="text" id="memory-search" placeholder="Search memories..." onkeyup="searchMemories()">
       <button class="btn" onclick="searchMemories()">Search</button>
     </div>
-    <div id="memoriesGrid"></div>
+    <div id="memories-grid"></div>
+  </div>
+  
+  <!-- TEAM -->
+  <div id="team" class="tab-content">
+    <div id="team-grid"></div>
   </div>
   
   <script>
     let state = {};
     let ws = null;
     
-    // Connect WebSocket
+    // Connect
     function connect() {
       ws = new WebSocket(`ws://${location.host}/ws`);
-      
-      ws.onopen = () => console.log('[WS] Connected');
-      
-      ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'initial_state') {
-          state = msg;
+      ws.onmessage = (e) => {
+        const m = JSON.parse(e.data);
+        if (m.type === 'initial_state') {
+          state = m;
           renderAll();
-        } else if (msg.type === 'tasks_board_update') {
+        } else if (m.type === 'tasks_board_update') {
           state.tasks_board = state.tasks_board || [];
-          const idx = state.tasks_board.findIndex(t => t.id === msg.task.id);
-          if (idx >= 0) state.tasks_board[idx] = msg.task;
-          else state.tasks_board.push(msg.task);
-          renderTasksBoard();
-        } else if (msg.type === 'content_pipeline_update') {
-          state.content_pipeline = state.content_pipeline || [];
-          const idx = state.content_pipeline.findIndex(i => i.id === msg.item.id);
-          if (idx >= 0) state.content_pipeline[idx] = msg.item;
-          else state.content_pipeline.push(msg.item);
-          renderPipeline();
-        } else if (msg.type === 'team_update') {
-          state.team = state.team || [];
-          const idx = state.team.findIndex(t => t.id === msg.member.id);
-          if (idx >= 0) state.team[idx] = msg.member;
-          else state.team.push(msg.member);
-          renderTeam();
-        } else if (msg.type === 'office_update') {
-          state.office = state.office || [];
-          const idx = state.office.findIndex(o => o.id === msg.station.id);
-          if (idx >= 0) state.office[idx] = msg.station;
-          else state.office.push(msg.station);
-          renderOffice();
-        } else if (msg.type === 'memory_update') {
-          state.memories = state.memories || [];
-          state.memories.unshift(msg.memory);
-          renderMemories();
+          const i = state.tasks_board.findIndex(t => t.id === m.task.id);
+          (i >= 0 ? state.tasks_board[i] : state.tasks_board.push(m.task));
+          renderTasks();
         }
       };
-      
       ws.onclose = () => setTimeout(connect, 3000);
     }
     
-    // Load initial data
     async function loadData() {
-      const [status, tasksBoard, pipeline, calendar, team, office, memories] = await Promise.all([
-        fetch('/api/status').then(r => r.json()),
-        fetch('/api/tasks-board').then(r => r.json()),
-        fetch('/api/content-pipeline').then(r => r.json()),
-        fetch('/api/calendar').then(r => r.json()),
-        fetch('/api/team').then(r => r.json()),
-        fetch('/api/office').then(r => r.json()),
-        fetch('/api/memories').then(r => r.json())
+      const r = await Promise.all([
+        fetch('/api/tasks-board').then(x => x.json()),
+        fetch('/api/content-pipeline').then(x => x.json()),
+        fetch('/api/calendar').then(x => x.json()),
+        fetch('/api/memories').then(x => x.json()),
+        fetch('/api/team').then(x => x.json())
       ]);
-      
-      state = { ...state, ...status, tasks_board: tasksBoard.tasks, content_pipeline: pipeline.pipeline, calendar: calendar.events, team: team.team, office: office.office, memories: memories.memories };
+      state.tasks_board = r[0].tasks;
+      state.content_pipeline = r[1].pipeline;
+      state.calendar = r[2].events;
+      state.memories = r[3].memories;
+      state.team = r[4].team;
       renderAll();
     }
     
     function renderAll() {
-      renderCommandCenter();
-      renderTasksBoard();
-      renderPipeline();
+      renderStats();
+      renderTasks();
+      renderContent();
       renderCalendar();
-      renderTeam();
-      renderOffice();
       renderMemories();
-      
-      document.getElementById('teamCount').textContent = `Team: ${(state.team || []).length}`;
-      document.getElementById('taskCount').textContent = `Active Tasks: ${(state.tasks_board || []).filter(t => t.status === 'in_progress').length}`;
+      renderTeam();
     }
     
-    // Command Center
-    function renderCommandCenter() {
-      const grid = document.getElementById('commandGrid');
-      const team = state.team || [];
+    function renderStats() {
+      const t = state.tasks_board || [];
+      const done = t.filter(x => x.status === 'done').length;
+      const progress = t.filter(x => x.status === 'in_progress').length;
+      const backlog = t.filter(x => x.status === 'todo').length;
+      const recurring = t.filter(x => x.status === 'recurring').length;
       
-      grid.innerHTML = `
-        <div class="card">
-          <div class="card-title">🎯 SYSTEM STATUS</div>
-          <div style="font-size: 12px;">
-            <div>Uptime: ${formatUptime(state.uptime)}</div>
-            <div>Team Active: ${team.filter(t => t.status === 'working').length}/${team.length}</div>
-            <div>Tasks In Progress: ${(state.tasks_board || []).filter(t => t.status === 'in_progress').length}</div>
-          </div>
-        </div>
-      `;
+      document.getElementById('stat-completed').textContent = done;
+      document.getElementById('stat-progress').textContent = progress;
+      document.getElementById('stat-backlog').textContent = backlog;
+      document.getElementById('stat-recurring').textContent = recurring;
+      document.getElementById('stat-total').textContent = t.length;
       
-      team.forEach(member => {
-        grid.innerHTML += `
-          <div class="card">
-            <div class="card-title">${member.avatar} ${member.name}</div>
-            <div style="font-size: 12px;">
-              <div><span class="status-dot ${member.status === 'working' ? 'working' : 'idle'}"></span>${member.status.toUpperCase()}</div>
-              <div>Role: ${member.role}</div>
-              <div>Manager: ${member.manager}</div>
+      document.getElementById('count-recurring').textContent = recurring;
+      document.getElementById('count-backlog').textContent = backlog;
+      document.getElementById('count-in_progress').textContent = progress;
+      document.getElementById('count-done').textContent = done;
+    }
+    
+    function renderTasks() {
+      const t = state.tasks_board || [];
+      ['recurring', 'todo', 'in_progress', 'done'].forEach(status => {
+        const col = document.getElementById(`col-${status}`);
+        const tasks = t.filter(x => x.status === status);
+        col.innerHTML = tasks.map(task => `
+          <div class="task-card" onclick="editTask('${task.id}')">
+            <div class="task-title">${task.title}</div>
+            <div class="task-meta">
+              <span class="tag ${task.priority}">${task.priority}</span>
+              <span class="tag ${task.owner === 'James' ? 'owner-me' : 'owner-agent'}">${task.owner}</span>
+              ${task.project ? `<span class="tag project-${task.project}">${task.project}</span>` : ''}
+              ${task.type ? `<span class="tag ${task.type}">${task.type}</span>` : ''}
             </div>
           </div>
-        `;
+        `).join('');
       });
+      renderStats();
     }
     
-    // Tasks Board
-    function renderTasksBoard() {
-      const container = document.getElementById('tasksBoard');
-      const tasks = state.tasks_board || [];
-      
-      if (tasks.length === 0) {
-        container.innerHTML = '<p style="color:#888">No tasks yet. Add one!</p>';
-        return;
-      }
-      
-      container.innerHTML = tasks.map(task => `
+    let contentFilter = 'all';
+    function filterContent(f) { contentFilter = f; renderContent(); }
+    
+    function renderContent() {
+      const c = (state.content_pipeline || []).filter(x => contentFilter === 'all' || x.type === contentFilter);
+      document.getElementById('content-grid').innerHTML = c.map(item => `
         <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:start;">
-            <div>
-              <div style="font-weight:bold;color:#00ffaa;">${task.title}</div>
-              <div style="font-size:11px;color:#888;margin-top:4px;">Owner: ${task.owner}</div>
-            </div>
-            <span class="badge ${task.status}">${task.status.replace('_', ' ')}</span>
-          </div>
-          <div style="margin-top:8px;display:flex;gap:8px;">
-            <span class="badge ${task.priority}">${task.priority}</span>
-            <select onchange="updateTask('${task.id}', 'status', this.value)" style="width:auto;padding:4px;margin:0;">
-              <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>Todo</option>
-              <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-              <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
-            </select>
-          </div>
+          <div style="font-weight:bold;margin-bottom:8px;">${item.title}</div>
+          <span class="tag ${item.stage}">${item.stage}</span>
+          <span class="tag ${item.type || item.platform}">${item.type || item.platform}</span>
+          <div style="font-size:11px;color:#888;margin-top:8px;">Assignee: ${item.assignee}</div>
         </div>
-      `).join('');
+      `).join('') || '<p style="color:#888">No content yet</p>';
     }
     
-    function updateTask(id, field, value) {
-      fetch(`/api/tasks-board/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value })
-      });
-    }
-    
-    function showAddTask() {
-      const title = prompt('Task title:');
-      if (title) {
-        fetch('/api/tasks-board', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, status: 'todo', owner: 'James', priority: 'medium' })
-        });
-      }
-    }
-    
-    // Content Pipeline
-    let currentPipelineFilter = 'all';
-    
-    function filterPipeline(stage) {
-      currentPipelineFilter = stage;
-      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
-      event.target.classList.add('active');
-      renderPipeline();
-    }
-    
-    function renderPipeline() {
-      const container = document.getElementById('pipelineGrid');
-      let items = state.content_pipeline || [];
-      
-      if (currentPipelineFilter !== 'all') {
-        items = items.filter(i => i.stage === currentPipelineFilter);
-      }
-      
-      if (items.length === 0) {
-        container.innerHTML = '<p style="color:#888">No content in pipeline.</p>';
-        return;
-      }
-      
-      container.innerHTML = items.map(item => `
-        <div class="card">
-          <div class="card-title">${item.title}</div>
-          <span class="badge ${item.stage}">${item.stage}</span>
-          <div style="font-size:11px;color:#888;margin-top:8px;">
-            Platform: ${item.platform} | Assignee: ${item.assignee}
-          </div>
-          <select onchange="updatePipeline('${item.id}', 'stage', this.value)" style="width:auto;padding:4px;margin-top:8px;">
-            <option value="idea" ${item.stage === 'idea' ? 'selected' : ''}>Idea</option>
-            <option value="script" ${item.stage === 'script' ? 'selected' : ''}>Script</option>
-            <option value="thumbnail" ${item.stage === 'thumbnail' ? 'selected' : ''}>Thumbnail</option>
-            <option value="filming" ${item.stage === 'filming' ? 'selected' : ''}>Filming</option>
-            <option value="done" ${item.stage === 'done' ? 'selected' : ''}>Done</option>
-          </select>
-        </div>
-      `).join('');
-    }
-    
-    function updatePipeline(id, field, value) {
-      fetch(`/api/content-pipeline/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value })
-      });
-    }
-    
-    // Calendar
     function renderCalendar() {
-      const container = document.getElementById('calendarGrid');
-      const events = state.calendar || [];
-      
-      if (events.length === 0) {
-        container.innerHTML = '<p style="color:#888">No calendar events.</p>';
-        return;
-      }
-      
-      container.innerHTML = events.map(event => `
-        <div class="calendar-event">
-          <div class="calendar-time">${formatDate(event.time)}</div>
-          <div style="flex:1;">
-            <div style="font-weight:bold;">${event.title}</div>
-            <div style="font-size:11px;color:#888;">${event.owner !== 'all' ? 'Owner: ' + event.owner : ''}</div>
-          </div>
-          ${event.type === 'recurring' ? '<span class="calendar-recurring">RECURRING</span>' : ''}
+      const c = state.calendar || [];
+      document.getElementById('calendar-grid').innerHTML = c.map(e => `
+        <div class="card" style="border-left: 3px solid #00d4ff;">
+          <div style="font-weight:bold;">${e.title}</div>
+          <div style="font-size:12px;color:#888;">${new Date(e.time).toLocaleString()}</div>
+          <span class="tag ${e.type}">${e.type}</span>
         </div>
-      `).join('');
+      `).join('') || '<p style="color:#888">No events</p>';
     }
     
-    function showAddEvent() {
-      const title = prompt('Event title:');
-      const time = prompt('Time (ISO format, e.g. 2026-02-20T09:00:00Z):');
-      if (title && time) {
-        fetch('/api/calendar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, time, type: 'one-time', owner: 'James' })
-        });
-      }
-    }
-    
-    // Team
-    function renderTeam() {
-      const container = document.getElementById('teamGrid');
-      const team = state.team || [];
-      
-      container.innerHTML = team.map(member => `
-        <div class="team-member">
-          <div class="team-avatar">${member.avatar}</div>
-          <div class="team-info">
-            <div class="team-name">${member.name}</div>
-            <div class="team-role">${member.role}</div>
-            <div class="team-status"><span class="status-dot ${member.status === 'working' ? 'working' : 'idle'}"></span>${member.status}</div>
-          </div>
-          <div style="text-align:right;">
-            <select onchange="updateTeam('${member.id}', 'status', this.value)" style="width:auto;padding:4px;">
-              <option value="working" ${member.status === 'working' ? 'selected' : ''}>Working</option>
-              <option value="idle" ${member.status === 'idle' ? 'selected' : ''}>Idle</option>
-            </select>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    function updateTeam(id, field, value) {
-      fetch(`/api/team/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value })
-      });
-    }
-    
-    // Office
-    function renderOffice() {
-      const container = document.getElementById('officeGrid');
-      const office = state.office || [];
-      
-      container.innerHTML = office.map(station => `
-        <div class="workstation ${station.status}">
-          <div class="station-icon">🖥️</div>
-          <div class="station-name">${station.id}</div>
-          <div class="computer ${station.computer_on ? 'on' : 'off'}"></div>
-          <div class="station-task">${station.current_task || 'Idle'}</div>
-          <select onchange="updateOffice('${station.id}', 'status', this.value)" style="width:auto;padding:4px;margin-top:8px;">
-            <option value="working" ${station.status === 'working' ? 'selected' : ''}>Working</option>
-            <option value="idle" ${station.status === 'idle' ? 'selected' : ''}>Idle</option>
-          </select>
-        </div>
-      `).join('');
-    }
-    
-    function updateOffice(id, field, value) {
-      fetch(`/api/office/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          [field]: value,
-          computer_on: value === 'working'
-        })
-      });
-    }
-    
-    // Memories
     function renderMemories() {
-      const container = document.getElementById('memoriesGrid');
-      const memories = state.memories || [];
-      
-      if (memories.length === 0) {
-        container.innerHTML = '<p style="color:#888">No memories yet.</p>';
-        return;
-      }
-      
-      container.innerHTML = memories.map(mem => `
-        <div class="memory-item ${mem.type}">
-          <div class="memory-title">${mem.title}</div>
-          <div class="memory-content">${mem.content}</div>
-          <div class="memory-meta">${new Date(mem.timestamp).toLocaleString()} | ${mem.type}</div>
+      const m = state.memories || [];
+      document.getElementById('memories-grid').innerHTML = m.map(mem => `
+        <div class="memory-item">
+          <div style="font-weight:bold;color:#00d4ff;">${mem.title}</div>
+          <div style="font-size:13px;margin-top:8px;">${mem.content}</div>
+          <div style="font-size:11px;color:#888;margin-top:8px;">${new Date(mem.timestamp).toLocaleString()}</div>
+        </div>
+      `).join('') || '<p style="color:#888">No memories</p>';
+    }
+    
+    function renderTeam() {
+      const team = state.team || [];
+      document.getElementById('team-grid').innerHTML = team.map(m => `
+        <div class="card" style="display:flex;align-items:center;gap:16px;">
+          <div style="font-size:32px;">${m.avatar}</div>
+          <div>
+            <div style="font-weight:bold;color:#00ffaa;">${m.name}</div>
+            <div style="font-size:12px;color:#888;">${m.role}</div>
+            <span class="tag ${m.status === 'working' ? 'in_progress' : 'low'}">${m.status}</span>
+          </div>
         </div>
       `).join('');
     }
     
     function searchMemories() {
-      const query = document.getElementById('memorySearch').value;
-      fetch(`/api/memories${query ? '?q=' + encodeURIComponent(query) : ''}`)
-        .then(r => r.json())
-        .then(data => {
-          state.memories = data.memories;
-          renderMemories();
-        });
+      const q = document.getElementById('memory-search').value.toLowerCase();
+      const m = (state.memories || []).filter(x => !q || x.title.toLowerCase().includes(q) || x.content.toLowerCase().includes(q));
+      document.getElementById('memories-grid').innerHTML = m.map(mem => `
+        <div class="memory-item">
+          <div style="font-weight:bold;color:#00d4ff;">${mem.title}</div>
+          <div style="font-size:13px;margin-top:8px;">${mem.content}</div>
+          <div style="font-size:11px;color:#888;margin-top:8px;">${new Date(mem.timestamp).toLocaleString()}</div>
+        </div>
+      `).join('');
     }
     
-    // Utils
+    function showAddTask() {
+      const title = prompt('Task title:');
+      if (!title) return;
+      const status = prompt('Status (recurring/todo/in_progress/done):', 'todo');
+      const priority = prompt('Priority (high/medium/low):', 'medium');
+      const owner = prompt('Owner (James/Atlas/Reaper/etc):', 'James');
+      const project = prompt('Project (content/dev/research):', '');
+      const type = prompt('Type (video/written/social):', '');
+      
+      fetch('/api/tasks-board', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ title, status, priority, owner, project, type })
+      });
+    }
+    
+    function editTask(id) {
+      const task = (state.tasks_board || []).find(t => t.id === id);
+      if (!task) return;
+      const status = prompt('New status (recurring/todo/in_progress/done):', task.status);
+      if (status) {
+        fetch(`/api/tasks-board/${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status })
+        });
+      }
+    }
+    
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -727,23 +523,6 @@
       document.getElementById(tab).classList.add('active');
     }
     
-    function formatUptime(ms) {
-      if (!ms) return '--';
-      const seconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours = Math.floor(minutes / 60);
-      const days = Math.floor(hours / 24);
-      if (days > 0) return `${days}d ${hours % 24}h`;
-      if (hours > 0) return `${hours}h ${minutes % 60}m`;
-      return `${minutes}m`;
-    }
-    
-    function formatDate(iso) {
-      const d = new Date(iso);
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // Init
     loadData();
     connect();
   </script>
