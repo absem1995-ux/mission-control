@@ -60,6 +60,22 @@ node mission-control.js
 
 ---
 
+### 8. Clawdtalk Voice & Phone Skill
+**ID:** `clawdtalk`  
+**Version:** 1.0.0  
+**Status:** Research Complete  
+**Location:** `/skills/clawdtalk/`  
+**What it does:** Gives OpenClaw a real phone number for calls and SMS. Voice commands, call handling, SMS automation.
+
+**Security:** ✅ Verified Safe
+- PIN protection (optional, bcrypt hashed)
+- Caller ID validation (server-side)
+- WebSocket connection (outbound only, no public exposure)
+
+**Setup:** 5 minutes at clawdtalk.com
+
+---
+
 ## Skill Creation Checklist
 
 When creating a new skill, follow this template:
